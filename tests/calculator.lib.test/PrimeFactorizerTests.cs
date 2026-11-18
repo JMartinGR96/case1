@@ -10,6 +10,7 @@ namespace calculator.lib.test
         [InlineData(3, 3)]
         [InlineData(4, 2, 2)]
         [InlineData(6, 2, 3)]
+        [InlineData(8, 2, 2, 2)]
         public void Factorize_ReturnsPrimeFactorsInAscendingOrder(int number, params int[] expectedFactors)
         {
             var factors = PrimeFactorizer.Factorize(number);
