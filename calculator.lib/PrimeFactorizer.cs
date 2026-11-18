@@ -5,14 +5,13 @@ namespace calculator.lib
         public static List<int> Factorize(int number)
         {
             var factors = new List<int>();
-            while (number % 2 == 0)
+            for (int divisor = 2; number > 1; divisor++)
             {
-                factors.Add(2);
-                number /= 2;
-            }
-            if (number > 1)
-            {
-                factors.Add(number);
+                while (number % divisor == 0)
+                {
+                    factors.Add(divisor);
+                    number /= divisor;
+                }
             }
             return factors;
         }
