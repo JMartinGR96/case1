@@ -31,16 +31,8 @@ namespace calculator.lib.test
         [InlineData(30030, 2, 3, 5, 7, 11, 13)]
         [InlineData(2147117569, 46337, 46337)]
         [InlineData(2147483646, 2, 3, 3, 7, 11, 31, 151, 331)]
-        public void Factorize_ReturnsPrimeFactorsInAscendingOrder(int number, params int[] expectedFactors)
-        {
-            var factors = PrimeFactorizer.Factorize(number);
-
-            Assert.Equal(expectedFactors, factors);
-        }
-
         // Casos difíciles: primos grandes, potencias máximas que caben en int
-        // y números con dos factores primos grandes (el peor caso para el algoritmo).
-        [Theory]
+        // y números con dos factores primos grandes.
         [InlineData(65537, 65537)]                             // primo de Fermat
         [InlineData(998244353, 998244353)]                     // primo grande
         [InlineData(999999937, 999999937)]                     // mayor primo por debajo de 10^9
@@ -57,12 +49,9 @@ namespace calculator.lib.test
         [InlineData(1234567890, 2, 3, 3, 5, 3607, 3803)]
         [InlineData(2147483645, 5, 19, 22605091)]              // int.MaxValue - 2
         [InlineData(2145747229, 32749, 65521)]                 // dos primos grandes distintos
-        [InlineData(2146654199, 46327, 46337)]                 // los dos mayores primos < raíz de int.MaxValue
-        public void Factorize_LargeAndSpecialNumbers(int number, params int[] expectedFactors)
+        public void Factorize_ReturnsPrimeFactorsInAscendingOrder(int number, params int[] expectedFactors)
         {
-            var factors = PrimeFactorizer.Factorize(number);
-
-            Assert.Equal(expectedFactors, factors);
+            Assert.Equal(expectedFactors, PrimeFactorizer.Factorize(number));
         }
 
         [Theory]
@@ -72,15 +61,20 @@ namespace calculator.lib.test
         [InlineData(int.MinValue)]
         public void Factorize_NumberLessThanOne_Throws(int number)
         {
-            Assert.Throws<ArgumentOutOfRangeException>(() => PrimeFactorizer.Factorize(number));
-        }
-
-        [Fact]
-        public void Factorize_InvalidNumber_ExceptionNamesTheParameter()
-        {
-            var exception = Assert.Throws<ArgumentOutOfRangeException>(() => PrimeFactorizer.Factorize(0));
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() => PrimeFactorizer.Factorize(number));
 
             Assert.Equal("number", exception.ParamName);
+        }
+
+        // Los casos más lentos para el algoritmo deben resolverse en menos de 1 segundo.
+        [Theory(Timeout = 1000)]
+        [InlineData(int.MaxValue, int.MaxValue)]               // profesor: el mayor primo que cabe en int
+        [InlineData(2146654199, 46327, 46337)]                 // los dos mayores primos < raíz de int.MaxValue
+        public async Task Factorize_WorstCases_AreFast(int number, params int[] expectedFactors)
+        {
+            var factors = await Task.Run(() => PrimeFactorizer.Factorize(number));
+
+            Assert.Equal(expectedFactors, factors);
         }
 
         [Fact]
@@ -89,73 +83,28 @@ namespace calculator.lib.test
             var first = PrimeFactorizer.Factorize(12);
             first.Clear(); // modificar el resultado no debe afectar a llamadas posteriores
 
-            var second = PrimeFactorizer.Factorize(12);
-
-            Assert.Equal(new[] { 2, 2, 3 }, second);
-            Assert.NotSame(first, second);
+            Assert.Equal(new[] { 2, 2, 3 }, PrimeFactorizer.Factorize(12));
         }
 
-        [Fact(Timeout = 1000)]
-        public async Task Factorize_WorstCaseSemiprime_IsFast()
-        {
-            // 46327 x 46337: obliga a probar casi todos los divisores hasta la raíz cuadrada.
-            var factors = await Task.Run(() => PrimeFactorizer.Factorize(2146654199));
-
-            Assert.Equal(new[] { 46327, 46337 }, factors);
-        }
-
-        // Tests de propiedades: en vez de escribir el resultado esperado a mano,
-        // se comprueba que se cumplen las reglas de la descomposición para 1..10000.
-        private const int PropertyLimit = 10_000;
-
+        // Test de propiedades: para cada número de 1 a 10000 se comprueba que el resultado
+        // es una descomposición válida: factores primos, en orden y cuyo producto es el número.
+        // Por el teorema fundamental de la aritmética solo existe una, así que es la correcta.
         [Fact]
-        public void Factorize_ProductOfFactorsIsTheOriginalNumber()
+        public void Factorize_ReturnsAValidFactorizationFrom1To10000()
         {
-            for (int number = 1; number <= PropertyLimit; number++)
-            {
-                var product = PrimeFactorizer.Factorize(number).Aggregate(1L, (acc, f) => acc * f);
-
-                Assert.True(product == number, $"Para {number} el producto de los factores es {product}");
-            }
-        }
-
-        [Fact]
-        public void Factorize_AllFactorsArePrime()
-        {
-            for (int number = 1; number <= PropertyLimit; number++)
-            {
-                foreach (var factor in PrimeFactorizer.Factorize(number))
-                {
-                    Assert.True(IsPrimeByTrialDivision(factor), $"Para {number} el factor {factor} no es primo");
-                }
-            }
-        }
-
-        [Fact]
-        public void Factorize_FactorsAreInAscendingOrder()
-        {
-            for (int number = 1; number <= PropertyLimit; number++)
+            for (int number = 1; number <= 10_000; number++)
             {
                 var factors = PrimeFactorizer.Factorize(number);
+                var description = $"{number} -> [{string.Join(", ", factors)}]";
 
-                Assert.True(factors.SequenceEqual(factors.Order()), $"Para {number} los factores no están ordenados: [{string.Join(", ", factors)}]");
-            }
-        }
-
-        [Fact]
-        public void Factorize_PrimeNumbersReturnThemselves()
-        {
-            for (int number = 2; number <= PropertyLimit; number++)
-            {
-                if (IsPrimeByTrialDivision(number))
-                {
-                    Assert.Equal(new[] { number }, PrimeFactorizer.Factorize(number));
-                }
+                Assert.True(factors.All(IsPrime), $"Hay un factor que no es primo: {description}");
+                Assert.True(factors.SequenceEqual(factors.Order()), $"Factores desordenados: {description}");
+                Assert.True(factors.Aggregate(1L, (acc, f) => acc * f) == number, $"El producto no da el número: {description}");
             }
         }
 
         // Comprobación de primalidad independiente de la implementación, solo para los tests.
-        private static bool IsPrimeByTrialDivision(int n)
+        private static bool IsPrime(int n)
         {
             if (n < 2) return false;
             for (int d = 2; (long)d * d <= n; d++)
@@ -163,15 +112,6 @@ namespace calculator.lib.test
                 if (n % d == 0) return false;
             }
             return true;
-        }
-
-        // profesor: int.MaxValue también está en su secuencia (él lo tiene dentro del Theory).
-        [Fact(Timeout = 1000)]
-        public async Task Factorize_LargePrime_IsFast()
-        {
-            var factors = await Task.Run(() => PrimeFactorizer.Factorize(int.MaxValue));
-
-            Assert.Equal(new[] { int.MaxValue }, factors);
         }
     }
 }
