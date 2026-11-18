@@ -28,6 +28,15 @@ namespace calculator.lib.test
             Assert.Equal(expectedFactors, factors);
         }
 
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-1)]
+        [InlineData(-12)]
+        public void Factorize_NumberLessThanOne_Throws(int number)
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(() => PrimeFactorizer.Factorize(number));
+        }
+
         [Fact(Timeout = 1000)]
         public async Task Factorize_LargePrime_IsFast()
         {
