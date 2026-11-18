@@ -38,6 +38,33 @@ namespace calculator.lib.test
             Assert.Equal(expectedFactors, factors);
         }
 
+        // Casos difíciles: primos grandes, potencias máximas que caben en int
+        // y números con dos factores primos grandes (el peor caso para el algoritmo).
+        [Theory]
+        [InlineData(65537, 65537)]                             // primo de Fermat
+        [InlineData(998244353, 998244353)]                     // primo grande
+        [InlineData(999999937, 999999937)]                     // mayor primo por debajo de 10^9
+        [InlineData(1000000007, 1000000007)]                   // primo grande (10^9 + 7)
+        [InlineData(2000000014, 2, 1000000007)]                // 2 x primo grande
+        [InlineData(1000000, 2, 2, 2, 2, 2, 2, 5, 5, 5, 5, 5, 5)] // 10^6 = 2^6 x 5^6
+        [InlineData(1073741824, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+                                2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2)] // 2^30
+        [InlineData(1162261467, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+                                3, 3, 3, 3, 3, 3, 3, 3, 3)]    // 3^19, mayor potencia de 3 en int
+        [InlineData(1220703125, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5)] // 5^13
+        [InlineData(1977326743, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7)] // 7^11
+        [InlineData(223092870, 2, 3, 5, 7, 11, 13, 17, 19, 23)] // producto de los 9 primeros primos
+        [InlineData(1234567890, 2, 3, 3, 5, 3607, 3803)]
+        [InlineData(2147483645, 5, 19, 22605091)]              // int.MaxValue - 2
+        [InlineData(2145747229, 32749, 65521)]                 // dos primos grandes distintos
+        [InlineData(2146654199, 46327, 46337)]                 // los dos mayores primos < raíz de int.MaxValue
+        public void Factorize_LargeAndSpecialNumbers(int number, params int[] expectedFactors)
+        {
+            var factors = PrimeFactorizer.Factorize(number);
+
+            Assert.Equal(expectedFactors, factors);
+        }
+
         [Theory]
         [InlineData(0)]                                        // profesor
         [InlineData(-1)]                                       // profesor
