@@ -74,6 +74,67 @@ namespace calculator.lib.test
             Assert.Throws<ArgumentOutOfRangeException>(() => PrimeFactorizer.Factorize(number));
         }
 
+        // Tests de propiedades: en vez de escribir el resultado esperado a mano,
+        // se comprueba que se cumplen las reglas de la descomposición para 1..10000.
+        private const int PropertyLimit = 10_000;
+
+        [Fact]
+        public void Factorize_ProductOfFactorsIsTheOriginalNumber()
+        {
+            for (int number = 1; number <= PropertyLimit; number++)
+            {
+                var product = PrimeFactorizer.Factorize(number).Aggregate(1L, (acc, f) => acc * f);
+
+                Assert.True(product == number, $"Para {number} el producto de los factores es {product}");
+            }
+        }
+
+        [Fact]
+        public void Factorize_AllFactorsArePrime()
+        {
+            for (int number = 1; number <= PropertyLimit; number++)
+            {
+                foreach (var factor in PrimeFactorizer.Factorize(number))
+                {
+                    Assert.True(IsPrimeByTrialDivision(factor), $"Para {number} el factor {factor} no es primo");
+                }
+            }
+        }
+
+        [Fact]
+        public void Factorize_FactorsAreInAscendingOrder()
+        {
+            for (int number = 1; number <= PropertyLimit; number++)
+            {
+                var factors = PrimeFactorizer.Factorize(number);
+
+                Assert.True(factors.SequenceEqual(factors.Order()), $"Para {number} los factores no están ordenados: [{string.Join(", ", factors)}]");
+            }
+        }
+
+        [Fact]
+        public void Factorize_PrimeNumbersReturnThemselves()
+        {
+            for (int number = 2; number <= PropertyLimit; number++)
+            {
+                if (IsPrimeByTrialDivision(number))
+                {
+                    Assert.Equal(new[] { number }, PrimeFactorizer.Factorize(number));
+                }
+            }
+        }
+
+        // Comprobación de primalidad independiente de la implementación, solo para los tests.
+        private static bool IsPrimeByTrialDivision(int n)
+        {
+            if (n < 2) return false;
+            for (int d = 2; (long)d * d <= n; d++)
+            {
+                if (n % d == 0) return false;
+            }
+            return true;
+        }
+
         // profesor: int.MaxValue también está en su secuencia (él lo tiene dentro del Theory).
         [Fact(Timeout = 1000)]
         public async Task Factorize_LargePrime_IsFast()
