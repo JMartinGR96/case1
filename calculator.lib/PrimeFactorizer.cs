@@ -7,17 +7,23 @@ namespace calculator.lib
             ArgumentOutOfRangeException.ThrowIfLessThan(number, 1);
 
             var factors = new List<int>();
-            // Basta con probar divisores hasta la raíz cuadrada del número.
-            // Se usa divisor <= number / divisor para evitar el desbordamiento de divisor * divisor.
-            for (int divisor = 2; divisor <= number / divisor; divisor++)
+            int divisor = 2;
+            // Se prueban divisores hasta la raíz cuadrada de lo que queda por factorizar
+            // (divisor <= number / divisor evita el desbordamiento de divisor * divisor).
+            while (divisor <= number / divisor)
             {
-                while (number % divisor == 0)
+                if (number % divisor == 0)
                 {
                     factors.Add(divisor);
                     number /= divisor;
                 }
+                else
+                {
+                    // Después del 2 solo hace falta probar impares: 2, 3, 5, 7, 9...
+                    divisor += divisor == 2 ? 1 : 2;
+                }
             }
-            // Si queda algo mayor que 1, es un factor primo.
+            // Lo que queda, si es mayor que 1, es el último factor primo.
             if (number > 1)
             {
                 factors.Add(number);
