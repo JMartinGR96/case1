@@ -4,7 +4,12 @@ namespace calculator.lib
     {
         public static List<int> Factorize(int number)
         {
-            return new List<int>();
+            var factors = new List<int>();
+            if (number > 1)
+            {
+                factors.Add(number);
+            }
+            return factors;
         }
     }
 }
