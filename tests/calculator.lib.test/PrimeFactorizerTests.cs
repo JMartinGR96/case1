@@ -25,5 +25,13 @@ namespace calculator.lib.test
 
             Assert.Equal(expectedFactors, factors);
         }
+
+        [Fact(Timeout = 1000)]
+        public async Task Factorize_LargePrime_IsFast()
+        {
+            var factors = await Task.Run(() => PrimeFactorizer.Factorize(int.MaxValue));
+
+            Assert.Equal(new[] { int.MaxValue }, factors);
+        }
     }
 }
