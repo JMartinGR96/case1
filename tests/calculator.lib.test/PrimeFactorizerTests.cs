@@ -69,9 +69,39 @@ namespace calculator.lib.test
         [InlineData(0)]                                        // profesor
         [InlineData(-1)]                                       // profesor
         [InlineData(-12)]
+        [InlineData(int.MinValue)]
         public void Factorize_NumberLessThanOne_Throws(int number)
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => PrimeFactorizer.Factorize(number));
+        }
+
+        [Fact]
+        public void Factorize_InvalidNumber_ExceptionNamesTheParameter()
+        {
+            var exception = Assert.Throws<ArgumentOutOfRangeException>(() => PrimeFactorizer.Factorize(0));
+
+            Assert.Equal("number", exception.ParamName);
+        }
+
+        [Fact]
+        public void Factorize_ReturnsANewListEachCall()
+        {
+            var first = PrimeFactorizer.Factorize(12);
+            first.Clear(); // modificar el resultado no debe afectar a llamadas posteriores
+
+            var second = PrimeFactorizer.Factorize(12);
+
+            Assert.Equal(new[] { 2, 2, 3 }, second);
+            Assert.NotSame(first, second);
+        }
+
+        [Fact(Timeout = 1000)]
+        public async Task Factorize_WorstCaseSemiprime_IsFast()
+        {
+            // 46327 x 46337: obliga a probar casi todos los divisores hasta la raíz cuadrada.
+            var factors = await Task.Run(() => PrimeFactorizer.Factorize(2146654199));
+
+            Assert.Equal(new[] { 46327, 46337 }, factors);
         }
 
         // Tests de propiedades: en vez de escribir el resultado esperado a mano,
