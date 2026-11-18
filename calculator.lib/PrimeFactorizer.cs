@@ -4,6 +4,8 @@ namespace calculator.lib
     {
         public static List<int> Factorize(int number)
         {
+            ArgumentOutOfRangeException.ThrowIfLessThan(number, 1);
+
             var factors = new List<int>();
             // Basta con probar divisores hasta la raíz cuadrada del número.
             // Se usa divisor <= number / divisor para evitar el desbordamiento de divisor * divisor.
